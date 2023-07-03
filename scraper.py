@@ -16,42 +16,74 @@ salaries = []
 work_types = []
 
 
-def get_soup(start_at: int) -> BeautifulSoup:
-    URL = f"https://www.indeed.com/jobs?q=Data+engineer&l=United+States&start={start_at}&vjk=3dbde0befe814ec1"
+def get_job_list(page: int) -> BeautifulSoup:
+    URL = f"https://www.indeed.com/jobs?q=Data+engineer&l=United+States&start={page}&vjk=3dbde0befe814ec1"
     payload = {"api_key": os.getenv("API_KEY"), "url": URL, "dynamic": "false"}
     resp = requests.get("https://api.scrapingdog.com/scrape", params=payload)
     soup = BeautifulSoup(resp.text, "html.parser")
-
-    return soup
-
-
-def extract(soup: BeautifulSoup) -> None:
     jobs = soup.find_all("td", "resultContent")
-    for job in jobs:
-        title = job.find("h2")
-        company = job.find("span", class_="companyName")
-        location = job.find("div", class_="companyLocation")
 
-        if title and company and location:
-            titles.append(title.a.span["title"])
-            companies.append(company.text)
-            locations.append(location.text)
+    return jobs
 
-        for word in job.contents[2].strings:
-            if "$" in word:
-                salaries.append(word)
-            else:
-                salaries.append("unknown")
 
-            if word.lower() in ("full-time", "contract", "part-time"):
-                work_types.append(word.lower())
-            else:
-                work_types.append("unknown")
+def extract_job_title(job: BeautifulSoup) -> None:
+    title = job.find("h2")
+    if title is not None:
+        titles.append(title.a.span["title"])
+
+
+def extract_company_name(job: BeautifulSoup) -> None:
+    company = job.find("span", class_="companyName")
+    if company is not None:
+        companies.append(company.text)
+
+
+def extract_job_location(job: BeautifulSoup) -> None:
+    location = job.find("div", class_="companyLocation")
+    if location is not None:
+        locations.append(location.text)
+
+
+def extract_salary(job: BeautifulSoup) -> None:
+    job_details = job.contents[2].strings
+    for word in job_details:
+        if "$" in word:
+            salaries.append(word)
+
+
+def extract_work_hours(job: BeautifulSoup) -> None:
+    work_types_list = [
+        "full-time",
+        "contract",
+        "part-time",
+        "remote",
+        "fully-remote",
+        "monday to friday",
+    ]
+    job_details = job.contents[2].strings
+    for word in job_details:
+        if word.lower() in work_types_list or "shift" in word.lower():
+            work_types.append(word.lower())
+        if len(salaries) == len(work_types):
+            break
+
+    if len(salaries) > len(work_types):
+        work_types.append("unknown")
+
+
+def extract(job: BeautifulSoup) -> None:
+    extract_job_title(job)
+    extract_company_name(job)
+    extract_job_location(job)
+    extract_salary(job)
+    extract_work_hours(job)
 
 
 def main() -> None:
-    soup = get_soup(start_at=0)
-    extract(soup)
+    job_lists = get_job_list(page=0)
+    for job in job_lists:
+        extract(job)
+
     # df = pd.DataFrame(
     #     {
     #         "job_title": titles,
@@ -61,8 +93,8 @@ def main() -> None:
     #         "work_type": work_types,
     #     }
     # )
-
     # print(tabulate(df, headers="keys", tablefmt="psql"))
+
     print(len(titles))
     print(titles, "\n\n")
     print(len(companies))
