@@ -8,12 +8,11 @@ from tabulate import tabulate
 
 load_dotenv()
 
-
 titles = []
 companies = []
 locations = []
 salaries = []
-work_types = []
+work_hours = []
 
 
 def get_job_list(page: int) -> BeautifulSoup:
@@ -46,9 +45,12 @@ def extract_job_location(job: BeautifulSoup) -> None:
 
 def extract_salary(job: BeautifulSoup) -> None:
     job_details = job.contents[2].strings
-    for word in job_details:
-        if "$" in word:
-            salaries.append(word)
+    if job_details:
+        for word in job_details:
+            if "$" in word:
+                salaries.append(word)
+    if len(salaries) < len(companies):
+        salaries.append("unknown")
 
 
 def extract_work_hours(job: BeautifulSoup) -> None:
@@ -61,14 +63,14 @@ def extract_work_hours(job: BeautifulSoup) -> None:
         "monday to friday",
     ]
     job_details = job.contents[2].strings
-    for word in job_details:
-        if word.lower() in work_types_list or "shift" in word.lower():
-            work_types.append(word.lower())
-        if len(salaries) == len(work_types):
-            break
+    if job_details:
+        for word in job_details:
+            if word.lower() in work_types_list or "shift" in word.lower():
+                work_hours.append(word.lower())
+                break
 
-    if len(salaries) > len(work_types):
-        work_types.append("unknown")
+    if len(salaries) > len(work_hours):
+        work_hours.append("unknown")
 
 
 def extract(job: BeautifulSoup) -> None:
@@ -80,31 +82,31 @@ def extract(job: BeautifulSoup) -> None:
 
 
 def main() -> None:
-    job_lists = get_job_list(page=0)
+    job_lists = get_job_list(page=3)
     for job in job_lists:
         extract(job)
 
-    # df = pd.DataFrame(
-    #     {
-    #         "job_title": titles,
-    #         "company_name": companies,
-    #         "location": locations,
-    #         "salary": salaries,
-    #         "work_type": work_types,
-    #     }
-    # )
-    # print(tabulate(df, headers="keys", tablefmt="psql"))
+    df = pd.DataFrame(
+        {
+            "job_title": titles,
+            "company_name": companies,
+            "location": locations,
+            "salary": salaries,
+            "work_hour": work_hours,
+        }
+    )
+    print(tabulate(df, headers="keys", tablefmt="psql"))
 
-    print(len(titles))
-    print(titles, "\n\n")
-    print(len(companies))
-    print(companies, "\n\n")
-    print(len(locations))
-    print(locations, "\n\n")
-    print(len(salaries))
-    print(salaries)
-    print(len(work_types))
-    print(work_types)
+    # print(len(titles))
+    # print(titles, "\n\n")
+    # print(len(companies))
+    # print(companies, "\n\n")
+    # print(len(locations))
+    # print(locations, "\n\n")
+    # print(len(salaries))
+    # print(salaries)
+    # print(len(work_hours))
+    # print(work_hours)
 
 
 if __name__ == "__main__":
