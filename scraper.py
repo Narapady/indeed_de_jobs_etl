@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -28,19 +29,28 @@ def get_job_list(page: int) -> BeautifulSoup:
 def extract_job_title(job: BeautifulSoup) -> None:
     title = job.find("h2")
     if title is not None:
-        titles.append(title.a.span["title"])
+        try:
+            titles.append(title.a.span["title"])
+        except TypeError:
+            title.append("unknown")
 
 
 def extract_company_name(job: BeautifulSoup) -> None:
     company = job.find("span", class_="companyName")
     if company is not None:
-        companies.append(company.text)
+        try:
+            companies.append(company.text)
+        except TypeError:
+            companies.append("unknown")
 
 
 def extract_job_location(job: BeautifulSoup) -> None:
     location = job.find("div", class_="companyLocation")
     if location is not None:
-        locations.append(location.text)
+        try:
+            locations.append(location.text)
+        except TypeError:
+            locations.append("unknown")
 
 
 def extract_salary(job: BeautifulSoup) -> None:
@@ -80,11 +90,38 @@ def extract(job: BeautifulSoup) -> None:
     extract_salary(job)
     extract_work_hours(job)
 
+    assert (
+        len(titles)
+        == len(companies)
+        == len(locations)
+        == len(salaries)
+        == len(work_hours)
+    )
 
-def main() -> None:
-    job_lists = get_job_list(page=3)
+
+def test() -> None:
+    job_lists = get_job_list(page=660)
     for job in job_lists:
         extract(job)
+
+    print(len(titles))
+    print(titles, "\n\n")
+    print(len(companies))
+    print(companies, "\n\n")
+    print(len(locations))
+    print(locations, "\n\n")
+    print(len(salaries))
+    print(salaries)
+    print(len(work_hours))
+    print(work_hours)
+
+
+def main() -> None:
+    for i in range(0, 661, 10):
+        job_lists = get_job_list(page=i)
+        for job in job_lists:
+            extract(job)
+        print(f"done page {i}")
 
     df = pd.DataFrame(
         {
@@ -95,19 +132,11 @@ def main() -> None:
             "work_hour": work_hours,
         }
     )
-    print(tabulate(df, headers="keys", tablefmt="psql"))
-
-    # print(len(titles))
-    # print(titles, "\n\n")
-    # print(len(companies))
-    # print(companies, "\n\n")
-    # print(len(locations))
-    # print(locations, "\n\n")
-    # print(len(salaries))
-    # print(salaries)
-    # print(len(work_hours))
-    # print(work_hours)
+    path = Path.cwd() / "dataset" / "indeed_de_jobs.csv"
+    df.to_csv(path, index=False)
+    # print(tabulate(df, headers="keys", tablefmt="psql"))
 
 
 if __name__ == "__main__":
+    # test()
     main()
