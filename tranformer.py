@@ -1,10 +1,8 @@
 import re
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-df = pd.read_csv("./indeed_de_jobs_full.csv")
-df["location"] = df["location"].apply(lambda x: x.replace("\xa0", " "))
 
 
 def get_zipcode(location: str) -> str:
@@ -107,8 +105,28 @@ def tranform_work_hour(work_hour: str) -> str:
     return work_hour
 
 
-df["city"] = df["location"].apply(lambda x: get_city(x))
-df["state"] = df["location"].apply(lambda x: get_state(x))
-df["zipcode"] = df["location"].apply(lambda x: get_zipcode(x))
-df["work_hour"] = df["work_hour"].apply(lambda x: tranform_work_hour(x))
-df.head(40)
+def tranform_salary(salary: str) -> str:
+    salary = salary.replace("Estimated", "")
+    salary = salary.replace("$", "")
+    return salary
+
+
+def main() -> None:
+    df = pd.read_csv("./dataset/indeed_de_jobs.csv")
+
+    df["location"] = df["location"].apply(lambda x: x.replace("\xa0", " "))
+    df["city"] = df["location"].apply(lambda x: get_city(x))
+    df["state"] = df["location"].apply(lambda x: get_state(x))
+    df["zipcode"] = df["location"].apply(lambda x: get_zipcode(x))
+    df["work_hour"] = df["work_hour"].apply(lambda x: tranform_work_hour(x))
+    df["salary"] = df["salary"].apply(lambda x: tranform_salary(x))
+
+    df = df.rename(
+        columns={"salary": "estimated_salary_usd", "company_name": "company_address"}
+    )
+    path = Path.cwd() / "dataset" / "indeed_de_jobs_clean.csv"
+    df.to_csv(path, index=False)
+
+
+if __name__ == "__main__":
+    main()

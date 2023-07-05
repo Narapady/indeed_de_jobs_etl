@@ -99,23 +99,6 @@ def extract(job: BeautifulSoup) -> None:
     )
 
 
-def test() -> None:
-    job_lists = get_job_list(page=660)
-    for job in job_lists:
-        extract(job)
-
-    print(len(titles))
-    print(titles, "\n\n")
-    print(len(companies))
-    print(companies, "\n\n")
-    print(len(locations))
-    print(locations, "\n\n")
-    print(len(salaries))
-    print(salaries)
-    print(len(work_hours))
-    print(work_hours)
-
-
 def main() -> None:
     for i in range(0, 661, 10):
         job_lists = get_job_list(page=i)
@@ -138,5 +121,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # test()
     main()
