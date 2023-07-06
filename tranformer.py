@@ -8,7 +8,7 @@ import pandas as pd
 def get_zipcode(location: str) -> str:
     zipcode = re.findall(r"\d+", location)
     if not zipcode:
-        return np.nan
+        return "unknown"
 
     return zipcode[0].strip()
 
@@ -17,7 +17,7 @@ def get_city(location: str) -> str:
     city = location.split(", ")[0]
 
     if not city:
-        return np.nan
+        return "unknown"
 
     if "Remote in " in city:
         city = city.replace("Remote in ", "")
@@ -94,14 +94,14 @@ def get_state(location: str) -> str:
     state = re.findall(regex, location)
 
     if not state:
-        return np.nan
+        return "unknown"
 
     return state[0].strip()
 
 
 def tranform_work_hour(work_hour: str) -> str:
     if work_hour == "unknown":
-        return np.nan
+        return "unknown"
     return work_hour
 
 
@@ -122,9 +122,9 @@ def main() -> None:
     df["salary"] = df["salary"].apply(lambda x: tranform_salary(x))
 
     df = df.rename(
-        columns={"salary": "estimated_salary_usd", "company_name": "company_address"}
+        columns={"salary": "estimated_salary_usd", "location": "company_address"}
     )
-    path = Path.cwd() / "dataset" / "indeed_de_jobs_clean.csv"
+    path = Path.cwd() / "dataset" / "indeed_de_jobs_cleaned.csv"
     df.to_csv(path, index=False)
 
 

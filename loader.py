@@ -32,15 +32,13 @@ def create_target_table(
     talbe_name: str,
 ) -> None:
     con.execute(f"CREATE WAREHOUSE IF NOT EXISTS {warehouse_name}")
+    con.execute(f"USE WAREHOUSE {warehouse_name}")
     con.execute(f"CREATE DATABASE IF NOT EXISTS {database_name}")
     con.execute(f"USE DATABASE {database_name}")
     con.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
-
-    con.execute(f"USE WAREHOUSE {warehouse_name}")
-    con.execute(f"USE DATABASE {database_name}")
     con.execute(f"USE SCHEMA {database_name}.{schema_name}")
 
-    df = pd.read_csv("./dataset/indeed_de_jobs_clean.csv")
+    df = pd.read_csv("./dataset/indeed_de_jobs_cleaned.csv")
     create_table_sql = f"CREATE TABLE IF NOT EXISTS {talbe_name} (\n"
 
     for idx, col in enumerate(df.columns):
@@ -50,41 +48,32 @@ def create_target_table(
         else:
             create_table_sql = create_table_sql + " " + col + " varchar(1000)," + "\n"
 
-    # - file format
-
     con.execute(create_table_sql)
 
 
 def load_target_table(
     con: SnowflakeConnection, tablename: str, csv_filepath: str
 ) -> None:
-    # df = pd.read_csv("./dataset/indeed_de_jobs.clean")
-    # con.execute(
-    #     f"INSERT INTO {tablename}(col1, col2) VALUES "
-    #     + "    (123, 'test string1'), "
-    #     + "    (456, 'test string2')"
-    # )
-    # s = f"INSERT INTO test_table({[col for col in df.columns]}) VALUES "
-    # s = s.replace("[", "").replace("]", "").replace("'", "")
     # Putting Data
     con.execute(f"PUT file://{csv_filepath} @%{tablename}")
 
-    # file_format = """
-    #     create or replace file format csv_format
-    #     type = 'CSV'
-    #     record_delimiter = "\n"
-    #     field_delimiter = ','
-    #     skip_header = 1
-    #     empty_field_as_null = true
-    #     FIELD_OPTIONALLY_ENCLOSED_BY = '0x22'
-    # """
-    con.execute(
-        f"COPY INTO {tablename} FILE_FORMAT = (TYPE = 'csv' RECORD_DELIMITER = '\\n' SKIP_HEADER = 1) ON_ERROR='SKIP_FILE_5"
+    delimeter = r"'\n'"
+    csv_format = (
+        "create or replace file format csv_format\n"
+        + " type = 'CSV'\n"
+        + f" record_delimiter ={delimeter} \n"
+        + " field_delimiter = ','\n"
+        + " skip_header = 1\n"
+        + " empty_field_as_null = true\n"
+        + " FIELD_OPTIONALLY_ENCLOSED_BY = '0x22'\n"
     )
+    con.execute(csv_format)
+
+    con.execute(f"COPY INTO {tablename} FILE_FORMAT = 'csv_format'")
 
 
 def main() -> None:
-    filepath = Path.cwd() / "dataset" / "indeed_de_jobs_clean.csv"
+    filepath = Path.cwd() / "dataset" / "indeed_de_jobs_cleaned.csv"
     con = connect_snowflake()
     create_target_table(con, WAREHOUSE_NAME, DATABASE_NAME, SCHEMA_NAME, TABLE_NAME)
     load_target_table(con, TABLE_NAME, filepath)
