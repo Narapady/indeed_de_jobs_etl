@@ -115,7 +115,7 @@ def main() -> None:
             "work_hour": work_hours,
         }
     )
-    path = Path.cwd() / "dataset" / "indeed_de_jobs.csv"
+    path = Path.cwd() / "datasets" / "indeed_de_jobs.csv"
     df.to_csv(path, index=False)
     # print(tabulate(df, headers="keys", tablefmt="psql"))
 
