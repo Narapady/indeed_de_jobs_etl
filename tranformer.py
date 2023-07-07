@@ -1,7 +1,5 @@
 import re
 from pathlib import Path
-
-import numpy as np
 import pandas as pd
 
 us_state_to_abbrev = {

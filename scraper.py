@@ -116,7 +116,6 @@ def main() -> None:
     )
     path = Path.cwd() / "datasets" / "indeed_de_jobs.csv"
     df.to_csv(path, index=False)
-    # print(tabulate(df, headers="keys", tablefmt="psql"))
 
 
 if __name__ == "__main__":
