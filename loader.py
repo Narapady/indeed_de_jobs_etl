@@ -31,15 +31,15 @@ def create_target_table(
     schema_name: str,
     talbe_name: str,
 ) -> None:
-    con.execute(f"CREATE WAREHOUSE IF NOT EXISTS {warehouse_name}")
+    con.execute(f"CREATE OR REPLACE WAREHOUSE {warehouse_name}")
     con.execute(f"USE WAREHOUSE {warehouse_name}")
-    con.execute(f"CREATE DATABASE IF NOT EXISTS {database_name}")
+    con.execute(f"CREATE OR REPLACE DATABASE {database_name}")
     con.execute(f"USE DATABASE {database_name}")
-    con.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
+    con.execute(f"CREATE OR REPLACE SCHEMA {schema_name}")
     con.execute(f"USE SCHEMA {database_name}.{schema_name}")
 
     df = pd.read_csv("./dataset/indeed_de_jobs_cleaned.csv")
-    create_table_sql = f"CREATE TABLE IF NOT EXISTS {talbe_name} (\n"
+    create_table_sql = f"CREATE OR REPLACE TABLE  {talbe_name} (\n"
 
     for idx, col in enumerate(df.columns):
         if df.columns[idx] == df.columns[-1]:
@@ -76,7 +76,7 @@ def main() -> None:
     filepath = Path.cwd() / "dataset" / "indeed_de_jobs_cleaned.csv"
     con = connect_snowflake()
     create_target_table(con, WAREHOUSE_NAME, DATABASE_NAME, SCHEMA_NAME, TABLE_NAME)
-    load_target_table(con, TABLE_NAME, filepath)
+    # load_target_table(con, TABLE_NAME, filepath)
     con.close()
 
 

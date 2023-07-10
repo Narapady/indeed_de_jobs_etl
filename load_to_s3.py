@@ -14,7 +14,6 @@ REGION = "us-west-2"
 
 def create_bucket(bucket_name, region=None) -> bool:
     """Create an S3 bucket in a specified region"""
-
     # Create bucket
     try:
         if region is None:
