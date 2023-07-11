@@ -1,20 +1,3 @@
-USE ROLE ACCOUNTADMIN;
--- SELECT SYSTEM$GET_SNOWFLAKE_PLATFORM_INFO();
-
--- create storage integration
-CREATE OR REPLACE STORAGE INTEGRATION s3_snowflake_integration
-  TYPE = EXTERNAL_STAGE
-  STORAGE_PROVIDER = 'S3'
-  ENABLED = TRUE
-  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::209055978788:role/s3-snowflake-role'
-  STORAGE_ALLOWED_LOCATIONS = ('s3://indeed-de-jobs/', 's3://indeed-de-jobs/');
-
--- verify the stroage integration
-DESC INTEGRATION s3_snowflake_integration;
-
--- GRANT CREATE STAGE ON SCHEMA indeed_db.indeed_schema TO ROLE s3-snowflake-role;
-
--- GRANT USAGE ON INTEGRATION s3_snowflake_integration TO ROLE s3-snowflake-role;
 -- create role and assign previlege to the created role
 CREATE OR REPLACE ROLE indeed_role
    COMMENT = 'This role has all privileges on indeed_db and its schema';
@@ -40,7 +23,6 @@ GRANT CREATE STAGE
 GRANT CREATE FILE FORMAT 
     ON SCHEMA indeed_db.indeed_schema 
     TO ROLE indeed_role;
-
 GRANT USAGE 
     ON INTEGRATION s3_snowflake_integration 
     TO ROLE indeed_role;
@@ -64,8 +46,7 @@ CREATE OR REPLACE STAGE my_s3_stage
 
 -- copy data from s3 to snowflake table
 COPY INTO indeed_de_jobs_us
-  FROM @my_s3_stage
-  PATTERN='*_cleaned.csv';
+  FROM @my_s3_stage;
 
 
 
