@@ -1,6 +1,9 @@
 import re
 from pathlib import Path
+
+import numpy as np
 import pandas as pd
+from geopy.geocoders import Nominatim
 
 us_state_to_abbrev = {
     "Alabama": "AL",
@@ -131,6 +134,27 @@ def get_work_type(location: str) -> str:
     return "On site"
 
 
+def city_latitude(city: str) -> str:
+    if city == "unknown":
+        return "unknown"
+
+    geolocator = Nominatim(user_agent="MyApp")
+    location = geolocator.geocode(city)
+    if location is not None:
+        return str(location.latitude)
+
+
+def city_longitude(city: str) -> str:
+    if city == "unknown":
+        return "unknown"
+
+    geolocator = Nominatim(user_agent="MyApp")
+    location = geolocator.geocode(city)
+    if location is not None:
+        print(f"Longitude", location.longitude)
+        return str(location.longitude)
+
+
 def tranform_salary(salary: str) -> str:
     salary = salary.replace("Estimated", "")
     salary = salary.replace("$", "")
@@ -147,6 +171,26 @@ def main() -> None:
     df["work_hour"] = df["work_hour"].apply(lambda x: tranform_work_hour(x))
     df["salary"] = df["salary"].apply(lambda x: tranform_salary(x))
     df["work_type"] = df["location"].apply(lambda x: get_work_type(x))
+    df["latitude"] = df["city"].apply(lambda x: city_latitude(x))
+    df["longitude"] = df["city"].apply(lambda x: city_longitude(x))
+
+    # cities = list(df["city"])
+    # # Initialize Nominatim API
+    # latitutes = []
+    # longitutes = []
+    # for city in cities:
+    #     if city != "unknown":
+    #         geolocator = Nominatim(user_agent="MyApp")
+    #         location = geolocator.geocode(city)
+    #         if location is not None:
+    #             latitutes.append(location.latitude)
+    #             latitutes.append(location.longitude)
+    #             # print("City: ", city)
+    #             # print("The latitude of the location is: ", location.latitude)
+    #             # print("The longitude of the location is: ", location.longitude)
+    # df["latitude"] = latitutes
+    # df["longitude"] = longitutes
+
     df = df.rename(
         columns={"salary": "estimated_salary_usd", "location": "company_address"}
     )

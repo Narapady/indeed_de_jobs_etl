@@ -27,9 +27,11 @@ def create_bucket(bucket_name, region=None) -> bool:
                 aws_secret_access_key=os.getenv("AWS_SECRET_KEY"),
             )
             location = {"LocationConstraint": region}
-            s3_client.create_bucket(
-                Bucket=bucket_name, CreateBucketConfiguration=location
-            )
+            response = s3_client.list_buckets()
+            if bucket_name != response["Buckets"][0]["Name"]:
+                s3_client.create_bucket(
+                    Bucket=bucket_name, CreateBucketConfiguration=location
+                )
     except ClientError as e:
         logging.error(e)
         return False
@@ -61,8 +63,8 @@ def main() -> None:
     file_name_raw = Path.cwd() / "dataset" / "indeed_de_jobs.csv"
     file_name_clean = Path.cwd() / "dataset" / "indeed_de_jobs_cleaned.csv"
     if create_bucket(BUCKET_NAME, REGION):
-        upload_file(file_name_raw, BUCKET_NAME)
-        upload_file(file_name_clean, BUCKET_NAME)
+        upload_file(str(file_name_raw), BUCKET_NAME)
+        upload_file(str(file_name_clean), BUCKET_NAME)
 
 
 if __name__ == "__main__":
