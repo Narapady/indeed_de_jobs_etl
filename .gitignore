@@ -1,3 +1,4 @@
-myenv
+vir_env
 .env
 .streamlit
+py38_env
