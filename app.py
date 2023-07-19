@@ -1,12 +1,9 @@
-# - to activate conda environment: conda activate py38_env
-
 import folium
 import plotly.express as px
 import streamlit as st
 from dotenv import load_dotenv
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
-from snowflake.snowpark.types import DoubleType
 from streamlit_folium import st_folium
 
 load_dotenv()
@@ -98,26 +95,42 @@ def load_piechart_state(table_name: str) -> None:
 def load_piechart_city(table_name: str) -> None:
     st.header("Top 10 US cities with most data engineering jobs")
     sql_str = f"SELECT city,\
-                COUNT(*) de_jobs_by_city\
-                FROM {table_name}\
-                WHERE state <> 'unknown'\
-                GROUP BY city\
-                ORDER BY COUNT(*) DESC\
-                LIMIT 10;\
+                    COUNT(*) de_jobs_by_city\
+                    FROM {table_name}\
+                    WHERE state <> 'unknown'\
+                    GROUP BY city\
+                    ORDER BY COUNT(*) DESC\
+                    LIMIT 10;\
                 "
     df = session.sql(sql_str).collect()
     fig = px.pie(df, values="DE_JOBS_BY_CITY", names="CITY")
     st.plotly_chart(fig)
 
 
+def load_barchat_worktype(table_name: str) -> None:
+    sql_str = f" SELECT work_type,\
+                    work_hour,\
+                    count(*) AS work_type_cnt\
+                FROM {table_name}\
+                GROUP BY work_type, work_hour\
+                ORDER BY count(*) DESC;\
+                "
+    st.header("Number of work type in data engineering jobs")
+    df = session.sql(sql_str).collect()
+    fig = px.bar(df, x="WORK_TYPE", y="WORK_TYPE_CNT", color="WORK_HOUR")
+    st.plotly_chart(fig)
+
+
 def main() -> None:
     table_name = "indeed_de_jobs_us"
     with st.sidebar:
-        st.write("This is side bar")
+        st.title("US Data Engineering Jobs in Indeed")
+        st.divider()
     load_data(table_name)
     folium_map(table_name)
     load_piechart_state(table_name)
     load_piechart_city(table_name)
+    load_barchat_worktype(table_name)
 
 
 if __name__ == "__main__":

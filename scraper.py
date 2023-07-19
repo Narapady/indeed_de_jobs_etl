@@ -16,6 +16,15 @@ work_hours = []
 
 
 def get_job_list(page: int) -> BeautifulSoup:
+    """ Get data engineering job list
+        from a single page of indeed website
+
+    Args:
+        page (int): the th of page
+
+    Returns:
+        BeautifulSoup: _description_
+    """
     URL = f"https://www.indeed.com/jobs?q=Data+engineer&l=United+States&start={page}&vjk=3dbde0befe814ec1"
     payload = {"api_key": os.getenv("API_KEY"), "url": URL, "dynamic": "false"}
     resp = requests.get("https://api.scrapingdog.com/scrape", params=payload)

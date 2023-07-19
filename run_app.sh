@@ -1,0 +1,1 @@
+~/miniconda3/envs/py38_env/bin/python -m streamlit run app.py
