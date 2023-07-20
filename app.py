@@ -115,15 +115,32 @@ def load_barchart_jobs_by_company(session: Session, table_name: str) -> None:
     st.plotly_chart(fig)
 
 
+def load_sidebar() -> None:
+    with st.sidebar:
+        st.header("979 Data enginering jobs data is scrapped from indeed.com")
+        st.write(
+            "Data is ingestd to Amazon S3, transformed, then loaded to Snowflake.\
+             Streamlit App loads data fram Snowflake using Snowpark API and displays insights"
+        )
+        st.divider()
+
+        st.title("Tools and libaries used for the project")
+        st.markdown("- Scrap and transform data: Python")
+        st.markdown("- Create table and load data to Snowflake: SQL")
+        st.markdown("- Web Scrapping: BeautifulSoup, requests")
+        st.markdown("- S3 API: Amazon Boto3")
+        st.markdown("- Snowflake API: Snowflake connector, Snowpark")
+        st.markdown("- Data Manipulation: Pandas, Snowpark")
+        st.markdown("- Visualization: Streamlit, Plotly")
+
+
 def main() -> None:
     st.title("Data Engineering Jobs in the US")
+    load_sidebar()
+
     session = create_session()
     if session:
         st.success("Connected to Snowflake!")
-    with st.sidebar:
-        st.title("US Data Engineering Jobs in Indeed")
-        st.divider()
-        st.header
 
     indeed_job_tbl = load_table(session, TABLE_NAME)
     load_dataframe(table=indeed_job_tbl)
