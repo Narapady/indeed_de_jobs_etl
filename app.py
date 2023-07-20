@@ -2,60 +2,52 @@ import folium
 import plotly.express as px
 import streamlit as st
 from dotenv import load_dotenv
-from snowflake.snowpark import Session
+from snowflake.snowpark import Session, Table
 from snowflake.snowpark.functions import col
 from streamlit_folium import st_folium
 
 load_dotenv()
 
-st.title("Data Engineering Jobs in the US")
+
+TABLE_NAME = "indeed_de_jobs_us"
 
 
 # Establish Snowflake session
 @st.cache_resource
-def create_session():
+def create_session() -> Session:
     return Session.builder.configs(st.secrets.snowflake).create()
 
 
-session = create_session()
-st.success("Connected to Snowflake!")
+def load_table(session: Session, table_name: str) -> Table:
+    return session.table(table_name)
 
 
 # Load data table
-@st.cache_data
-def load_data(table_name):
-    ## Read in data table
-    st.write(f"Here's some example data from `{table_name}`:")
-    table = session.table(table_name)
-
-    ## Do some computation on it
-    table = table.limit(100)
-
-    ## Collect the results. This will run the query and download the data
-    table = table.collect()
-    st.dataframe(table)
+def load_dataframe(table: Table) -> None:
+    st.write(f"First of 100 rows of data from `{TABLE_NAME}`:")
+    df = table.collect()
+    st.dataframe(df)
 
 
-@st.cache_data
-def load_map(table_name):
-    st.write("Map of data engineering jobs in the US")
+def load_map(table: Table) -> None:
+    st.header("Map of data engineering jobs in the US")
     lat_lon_df = (
-        session.table(f"{table_name}")
-        .select(col("LATITUDE"), col("LONGITUDE"))
-        .filter(col("LATITUDE") != "unknown")
+        table.select(col("LATITUDE"), col("LONGITUDE")).filter(
+            col("LATITUDE") != "unknown"
+        )
     ).to_pandas()
 
     lat_lon_df = lat_lon_df.astype({"LATITUDE": "float32", "LONGITUDE": "float32"})
     lat_lon_df.drop_duplicates()
-    st.map(lat_lon_df)
+    st.map(lat_lon_df, zoom=2)
 
 
-def folium_map(table_name: str) -> None:
-    st.header("Map of data engineering jobs in the US")
+def folium_map(table: Table) -> None:
+    st.header("Folium map of data engineering jobs in the US")
     lat_lon_df = (
-        session.table(f"{table_name}")
-        .select(col("CITY"), col("LATITUDE"), col("LONGITUDE"))
-        .filter(col("LATITUDE") != "unknown")
+        table.select(col("CITY"), col("LATITUDE"), col("LONGITUDE")).filter(
+            col("LATITUDE") != "unknown"
+        )
     ).to_pandas()
 
     lat_lon_df = lat_lon_df.astype({"LATITUDE": "float32", "LONGITUDE": "float32"})
@@ -77,37 +69,23 @@ def folium_map(table_name: str) -> None:
     st_data = st_folium(m, width=725)
 
 
-def load_piechart_state(table_name: str) -> None:
-    st.header("Top 10 US states with most data engineering jobs")
-    sql_str = f"SELECT state,\
-                COUNT(*) de_jobs_by_state\
+def load_piechart(session: Session, table_name: str, level: str) -> None:
+    st.header(f"Top 10 US {level} with most data engineering jobs")
+    sql_str = f"SELECT {level},\
+                COUNT(*) de_jobs_by_{level}\
                 FROM {table_name}\
-                WHERE state <> 'unknown'\
-                GROUP BY state\
+                WHERE {level} <> 'unknown'\
+                GROUP BY {level}\
                 ORDER BY COUNT(*) DESC\
                 LIMIT 10;\
                 "
     df = session.sql(sql_str).collect()
-    fig = px.pie(df, values="DE_JOBS_BY_STATE", names="STATE")
+    fig = px.pie(df, values=f"DE_JOBS_BY_{level.upper()}", names=level.upper())
     st.plotly_chart(fig)
 
 
-def load_piechart_city(table_name: str) -> None:
-    st.header("Top 10 US cities with most data engineering jobs")
-    sql_str = f"SELECT city,\
-                    COUNT(*) de_jobs_by_city\
-                    FROM {table_name}\
-                    WHERE state <> 'unknown'\
-                    GROUP BY city\
-                    ORDER BY COUNT(*) DESC\
-                    LIMIT 10;\
-                "
-    df = session.sql(sql_str).collect()
-    fig = px.pie(df, values="DE_JOBS_BY_CITY", names="CITY")
-    st.plotly_chart(fig)
-
-
-def load_barchat_worktype(table_name: str) -> None:
+def load_barchat_worktype(session: Session, table_name: str) -> None:
+    st.header("Number of work type in each category")
     sql_str = f" SELECT work_type,\
                     work_hour,\
                     count(*) AS work_type_cnt\
@@ -121,16 +99,40 @@ def load_barchat_worktype(table_name: str) -> None:
     st.plotly_chart(fig)
 
 
+def load_barchart_jobs_by_company(session: Session, table_name: str) -> None:
+    st.header("Companies that offer more than 1 data engineering jobs")
+    sql_str = f"SELECT company_name,\
+                COUNT(*) num_jobs_by_company\
+            FROM {table_name}\
+            GROUP BY company_name\
+            HAVING COUNT(*) > 1\
+            ORDER BY COUNT(*);\
+            "
+    df = session.sql(sql_str).collect()
+    fig = px.bar(
+        df, x="NUM_JOBS_BY_COMPANY", y="COMPANY_NAME", color="NUM_JOBS_BY_COMPANY"
+    )
+    st.plotly_chart(fig)
+
+
 def main() -> None:
-    table_name = "indeed_de_jobs_us"
+    st.title("Data Engineering Jobs in the US")
+    session = create_session()
+    if session:
+        st.success("Connected to Snowflake!")
     with st.sidebar:
         st.title("US Data Engineering Jobs in Indeed")
         st.divider()
-    load_data(table_name)
-    folium_map(table_name)
-    load_piechart_state(table_name)
-    load_piechart_city(table_name)
-    load_barchat_worktype(table_name)
+        st.header
+
+    indeed_job_tbl = load_table(session, TABLE_NAME)
+    load_dataframe(table=indeed_job_tbl)
+    load_map(table=indeed_job_tbl)
+    folium_map(table=indeed_job_tbl)
+    load_piechart(session, TABLE_NAME, "state")
+    load_piechart(session, TABLE_NAME, "city")
+    load_barchat_worktype(session, TABLE_NAME)
+    load_barchart_jobs_by_company(session, TABLE_NAME)
 
 
 if __name__ == "__main__":

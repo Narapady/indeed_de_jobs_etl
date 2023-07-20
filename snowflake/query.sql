@@ -41,6 +41,12 @@ FROM indeed_de_jobs_us
 GROUP BY work_type, work_hour
 ORDER BY count(*) DESC;
 
+SELECT company_name,
+       COUNT(*) num_jobs_by_company
+FROM indeed_de_jobs_us
+GROUP BY company_name
+ORDER BY COUNT(*)DESC;
+
 
 
 
