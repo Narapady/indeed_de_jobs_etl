@@ -173,23 +173,6 @@ def main() -> None:
     df["latitude"] = df["city"].apply(lambda x: city_latitude(x))
     df["longitude"] = df["city"].apply(lambda x: city_longitude(x))
 
-    # cities = list(df["city"])
-    # # Initialize Nominatim API
-    # latitutes = []
-    # longitutes = []
-    # for city in cities:
-    #     if city != "unknown":
-    #         geolocator = Nominatim(user_agent="MyApp")
-    #         location = geolocator.geocode(city)
-    #         if location is not None:
-    #             latitutes.append(location.latitude)
-    #             latitutes.append(location.longitude)
-    #             # print("City: ", city)
-    #             # print("The latitude of the location is: ", location.latitude)
-    #             # print("The longitude of the location is: ", location.longitude)
-    # df["latitude"] = latitutes
-    # df["longitude"] = longitutes
-
     df = df.rename(
         columns={"salary": "estimated_salary_usd", "location": "company_address"}
     )

@@ -24,7 +24,7 @@ def load_table(session: Session, table_name: str) -> Table:
 
 # Load data table
 def load_dataframe(table: Table) -> None:
-    st.write(f"First of 100 rows of data from `{TABLE_NAME}`:")
+    st.write(f"Dataframe from `{TABLE_NAME}`:")
     df = table.collect()
     st.dataframe(df)
 
@@ -85,7 +85,6 @@ def load_piechart(session: Session, table_name: str, level: str) -> None:
 
 
 def load_barchat_worktype(session: Session, table_name: str) -> None:
-    st.header("Number of work type in each category")
     sql_str = f" SELECT work_type,\
                     work_hour,\
                     count(*) AS work_type_cnt\
