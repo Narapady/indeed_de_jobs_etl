@@ -1,7 +1,7 @@
 # Web srapping ETL project 
 979 Data enginering jobs data is scrapped from [indeed.com](https://www.indeed.com)
 Data is ingestd to Amazon S3, transformed, then loaded to Snowflake.
-Streamlit App loads data fram Snowflake using Snowpark API and displays insights
+Streamlit App loads data from Snowflake using Snowpark API and displays insights
 ## Tools and libaries used for the project
 - Scrap and transform data: Python
 - Create table and load data to Snowflake: SQL
